@@ -152,7 +152,7 @@ for i=1:tot_iter
             end
         end
         
-        %% negative gradient
+        %% negative gradient1
         vm0=bsxfun(@rdivide,v_m{end},variance);
         
         
