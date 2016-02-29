@@ -3,7 +3,7 @@ function [ W, b, c, e, samples ] = grbmPT( visible_node, num_hidden, mu, size_ba
 num_visible = size(visible_node,2);
 num_data = size(visible_node,1);
 
-W=1/(num_visible+num_hidden).*randn(num_visible,num_hidden);
+W=2/(num_visible+num_hidden).*(rand(num_visible,num_hidden)-0.5);
 b=zeros(1,num_visible);
 c=zeros(1,num_hidden);
 variance=ones(1,num_visible);
@@ -52,8 +52,7 @@ for i=1:tot_iter
         v_data = mean(vd0 ,1);
         h_data = mean(h0,1);
         vh_data = vd0'*h0./num_curr_batch;
-        z_data = 1/2.*(mean(v0,1)-b).^2 - mean(v0.*(h0*W'),1);
-        
+        z_data = 1/2.*mean(bsxfun(@minus,v0,b).^2 - v0.*(h0*W'),1);
         
         
         h_r=binornd(1, h0, num_curr_batch, num_hidden);
@@ -160,7 +159,7 @@ for i=1:tot_iter
         v_model = mean(vm0 ,1);
         h_model = mean(h_m{end},1);
         vh_model = vm0'*h_m{end}./num_model;
-        z_model = 1/2.*(mean(v_m{end},1)-b).^2 - mean(v_m{end}.*(h_m{end}*W'),1);
+        z_model = 1/2.*mean(bsxfun(@minus,v_m{end},b).^2 - v_m{end}.*(h_m{end}*W'),1);
         
        
         
@@ -169,8 +168,8 @@ for i=1:tot_iter
        	W=W+mu.*(vh_data-vh_model);
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
-       	z=z+mu.*exp(-z).*(z_data-z_model);
-       	variance = exp(z);
+       	%z=z+mu.*exp(-z).*(z_data-z_model);
+       	%variance = exp(z);
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
@@ -189,7 +188,7 @@ for i=1:tot_iter
 
 
        %% decreasing update parameter
-       mu=0.995.*mu;
+       %mu=0.995.*mu;
        
        
        %% Save parameters and output to file
@@ -209,7 +208,7 @@ for i=1:tot_iter
             if(printout)
                 disp(['Savining File:  ' filename]);
             end
-            save(filename,'samples', 'W','b','c','e','num_hidden','mu','size_batch', 'tot_iter', 'num_gibbstep', 'num_Temp', 'swap_iter');
+            save(filename,'variance','samples', 'W','b','c','e','num_hidden','mu','size_batch', 'tot_iter', 'num_gibbstep', 'num_Temp', 'swap_iter');
         end
        
     end
