@@ -168,8 +168,8 @@ for i=1:tot_iter
        	W=W+mu.*(vh_data-vh_model);
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
-       	%z=z+mu.*exp(-z).*(z_data-z_model);
-       	%variance = exp(z);
+       	z=z+mu.*exp(-z).*(z_data-z_model);
+       	variance = exp(z);
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
@@ -189,8 +189,7 @@ for i=1:tot_iter
 
        %% decreasing update parameter
        %mu=0.995.*mu;
-       
-       
+
        %% Save parameters and output to file
        if(mod(curr_iter,save_freq)==0)
             if(printout)
