@@ -126,13 +126,11 @@ for i=1:tot_iter
                 b_pt1 = T(m+1).*b+(1-T(m+1)).*m_v;
                 var_pt1 = T(m+1).*variance + (1-T(m+1)).*var_v;  
                 
-          
-                E0_T0 = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b_pt0).^2 , 2.*var_pt0),2) - sum( log( 1+exp(bsxfun(@plus,v_m{m}*W_pt0,c_pt0) ) ),2 );
-                E0_T1 = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b_pt1).^2 , 2.*var_pt1),2) - sum( log( 1+exp(bsxfun(@plus,v_m{m}*W_pt1,c_pt1) ) ),2 );
+                E0_T0 = E_GRBM(v_m{m},W_pt0,b_pt0,c_pt0,var_pt0);
+                E0_T1 = E_GRBM(v_m{m},W_pt1,b_pt1,c_pt1,var_pt1);
                 
-                E1_T0 = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m+1},b_pt0).^2 , 2.*var_pt0),2) - sum( log( 1+exp(bsxfun(@plus,v_m{m+1}*W_pt0,c_pt0) ) ),2 );
-                E1_T1 = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m+1},b_pt1).^2 , 2.*var_pt1),2) - sum( log( 1+exp(bsxfun(@plus,v_m{m+1}*W_pt1,c_pt1) ) ),2 );
-                
+                E1_T0 = E_GRBM(v_m{m+1},W_pt0,b_pt0,c_pt0,var_pt0);
+                E1_T1 = E_GRBM(v_m{m+1},W_pt1,b_pt1,c_pt1,var_pt1);
                 
                 Pswap = min(ones(size(num_model,1)) , exp(E0_T0 + E1_T1 - (E0_T1 + E1_T0) ) );               
                 Do_swap = binornd(1,Pswap, size(Pswap,1) , size(Pswap,2));
@@ -170,18 +168,21 @@ for i=1:tot_iter
             else
                 v_mu=batch{i+1};
             end
-                E_B = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{end},b).^2 , 2.*variance),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W,c) ) ),2 );
+                
+                E_B = E_GRBM(v_m{end},W,b,c,variance);
             for u=1:numel(update_rate)
                 
                 W_cand=W+update_rate(u).*mu.*(vh_data-vh_model);
                 b_cand=b+update_rate(u).*mu.*(v_data-v_model);
                 c_cand=c+update_rate(u).*mu.*(h_data-h_model);
                 z_cand=z+update_rate(u).*mu.*exp(-z).*(z_data-z_model);
-                var_cand = exp(z_cand);
+                var_cand = exp(min(z_cand,log(50) ));
                 
-                
-                E_D = sum(bsxfun(@rdivide,  bsxfun(@minus,v_mu,b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_mu*W_cand,c_cand) ) ),2 );
-                E_M = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{end},b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W_cand,c_cand) ) ),2 );
+
+
+                E_D = E_GRBM(v_mu,W_cand,b_cand,c_cand,var_cand);
+                E_M = E_GRBM(v_m{end},W_cand,b_cand,c_cand,var_cand);
+
                 cost(u)=sum(-E_D-logsum(E_B-E_M) + log (size(v_mu,1)) );
                 if(printout)
                     if(isnan(cost(u)))
@@ -199,7 +200,7 @@ for i=1:tot_iter
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
        	z=z+mu.*exp(-z).*(z_data-z_model);
-       	variance = exp(z);
+       	variance = exp(min(z,log(50)));
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
