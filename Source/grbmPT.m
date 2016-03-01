@@ -170,7 +170,7 @@ for i=1:tot_iter
             else
                 v_mu=batch{i+1};
             end
-                E_B = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b).^2 , 2.*variance),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W,c) ) ),2 );
+                E_B = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{end},b).^2 , 2.*variance),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W,c) ) ),2 );
             for u=1:numel(update_rate)
                 
                 W_cand=W+update_rate(u).*mu.*(vh_data-vh_model);
@@ -181,7 +181,7 @@ for i=1:tot_iter
                 
                 
                 E_D = sum(bsxfun(@rdivide,  bsxfun(@minus,v_mu,b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_mu*W_cand,c_cand) ) ),2 );
-                E_M = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W_cand,c_cand) ) ),2 );
+                E_M = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{end},b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W_cand,c_cand) ) ),2 );
                 cost(u)=sum(-E_D-log(sum(exp(E_B-E_M))) + log (size(v_mu,1)) );
                 if(printout)
                     if(isnan(cost(u)))
