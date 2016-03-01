@@ -14,9 +14,8 @@ num_gibbstep = 3;
 num_Temp = 10;
 swap_iter = 2;
 save_freq = 1e3;
-
 printout = 1;
-
+update_rate=[0.9 1 1.1];
 
 %% machine to run
 
@@ -29,5 +28,5 @@ end
 
 if(runGRBM)
 	visible_node = 255.*visible_node;
-	[W, b, c, e] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout);
+	[W, b, c, e] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout,update_rate);
 end

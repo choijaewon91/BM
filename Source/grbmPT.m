@@ -1,4 +1,4 @@
-function [ W, b, c, e, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout)
+function [ W, b, c, e, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout, update_rate)
 %% Initialize internal parameters
 num_visible = size(visible_node,2);
 num_data = size(visible_node,1);
@@ -161,9 +161,39 @@ for i=1:tot_iter
         vh_model = vm0'*h_m{end}./num_model;
         z_model = 1/2.*mean(bsxfun(@minus,v_m{end},b).^2 - v_m{end}.*(h_m{end}*W'),1);
         
-       
-        
         samples = v_m{end};
+        
+        %% Lookahead adaptive learning rate
+        if(numel(update_rate)>1)
+            if(i==num_batch)
+                v_mu=batch{1};
+            else
+                v_mu=batch{i+1};
+            end
+                E_B = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b).^2 , 2.*variance),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W,c) ) ),2 );
+            for u=1:numel(update_rate)
+                
+                W_cand=W+update_rate(u).*mu.*(vh_data-vh_model);
+                b_cand=b+update_rate(u).*mu.*(v_data-v_model);
+                c_cand=c+update_rate(u).*mu.*(h_data-h_model);
+                z_cand=z+update_rate(u).*mu.*exp(-z).*(z_data-z_model);
+                var_cand = exp(z_cand);
+                
+                
+                E_D = sum(bsxfun(@rdivide,  bsxfun(@minus,v_mu,b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_mu*W_cand,c_cand) ) ),2 );
+                E_M = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{m},b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W_cand,c_cand) ) ),2 );
+                cost(u)=sum(-E_D-log(sum(exp(E_B-E_M))) + log (size(v_mu,1)) );
+                if(printout)
+                    if(isnan(cost(u)))
+                        disp('Cost is NaN');
+                        return;
+                    end
+                end
+            end
+        end
+        [dump, ind] = max(cost);
+        mu=update_rate(ind).*mu;
+        
        	%% update parameters
        	W=W+mu.*(vh_data-vh_model);
        	b=b+mu.*(v_data-v_model);
@@ -173,12 +203,15 @@ for i=1:tot_iter
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
+            return;
     	end
 		if( max(isnan(b)) )
         	disp('Error: b Diverging');
+            return;
     	end
     	if( max(isnan(c)) )
         	disp('Error: c Diverging');
+            return;
     	end
     	if( max(isnan(z)) )
         	disp('Error: z Diverging');
