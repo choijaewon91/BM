@@ -176,7 +176,7 @@ for i=1:tot_iter
                 b_cand=b+update_rate(u).*mu.*(v_data-v_model);
                 c_cand=c+update_rate(u).*mu.*(h_data-h_model);
                 z_cand=z+update_rate(u).*mu.*exp(-z).*(z_data-z_model);
-                var_cand = exp(min(z_cand,log(50) ));
+                var_cand = exp(max(1e-9 ,min(z_cand,log(50) )));
                 
 
 
@@ -200,7 +200,7 @@ for i=1:tot_iter
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
        	z=z+mu.*exp(-z).*(z_data-z_model);
-       	variance = exp(min(z,log(50)));
+       	variance = exp(max(1e-9,min(z,log(50))));
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
