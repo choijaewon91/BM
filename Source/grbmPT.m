@@ -182,7 +182,7 @@ for i=1:tot_iter
                 
                 E_D = sum(bsxfun(@rdivide,  bsxfun(@minus,v_mu,b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_mu*W_cand,c_cand) ) ),2 );
                 E_M = sum(bsxfun(@rdivide,  bsxfun(@minus,v_m{end},b_cand).^2 , 2.*var_cand),2) - sum( log( 1+exp(bsxfun(@plus,v_m{end}*W_cand,c_cand) ) ),2 );
-                cost(u)=sum(-E_D-log(sum(exp(E_B-E_M))) + log (size(v_mu,1)) );
+                cost(u)=sum(-E_D-logsum(E_B-E_M) + log (size(v_mu,1)) );
                 if(printout)
                     if(isnan(cost(u)))
                         disp('Cost is NaN');
