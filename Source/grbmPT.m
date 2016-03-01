@@ -1,4 +1,4 @@
-function [ W, b, c, e, variance, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout, update_rate)
+function [ W, b, c, e, new_mu, variance, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout, update_rate)
 %% Initialize internal parameters
 num_visible = size(visible_node,2);
 num_data = size(visible_node,1);
@@ -15,6 +15,10 @@ T=linspace(0,1,num_Temp);
 
 h_m=cell(num_Temp,1);
 v_m=cell(num_Temp,1);
+
+m_v = mean(visible_node,1);
+var_v = var(visible_node);
+
 
 %% Mix Data Set
 mixed_visible_node = visible_node(randperm(num_data),:);
@@ -52,7 +56,7 @@ for i=1:tot_iter
         v_data = mean(vd0 ,1);
         h_data = mean(h0,1);
         vh_data = vd0'*h0./num_curr_batch;
-        z_data = 1/2.*mean(bsxfun(@minus,v0,b).^2 - v0.*(h0*W'),1);
+        z_data = mean(1/2.*bsxfun(@minus,v0,b).^2 - v0.*(h0*W'),1);
         
         
         h_r=binornd(1, h0, num_curr_batch, num_hidden);
@@ -75,9 +79,6 @@ for i=1:tot_iter
                     v_m{m}=v0;
                 end
             end
-            v_temp=cell2mat(v_m);
-            m_v = mean(v_temp,1);
-            var_v = var(v_temp);
             for m = 1:num_Temp
                 %for first iteration initialize h_m
                 
@@ -100,9 +101,7 @@ for i=1:tot_iter
                 disp(['Fantasy Particle Swapping - Current Iteration:  ' num2str(curr_iter)]);
             end
             
-            v_temp=cell2mat(v_m);
-            m_v = mean(v_temp,1);
-            var_v = var(v_temp);
+            
             
             W_pt1 = T(1).*W;
             c_pt1 = T(1).*c;
@@ -157,7 +156,7 @@ for i=1:tot_iter
         v_model = mean(vm0 ,1);
         h_model = mean(h_m{end},1);
         vh_model = vm0'*h_m{end}./num_model;
-        z_model = 1/2.*mean(bsxfun(@minus,v_m{end},b).^2 - v_m{end}.*(h_m{end}*W'),1);
+        z_model = mean(1/2.*bsxfun(@minus,v_m{end},b).^2 - v_m{end}.*(h_m{end}*W'),1);
         
         samples = v_m{end};
         
@@ -204,14 +203,18 @@ for i=1:tot_iter
             end
         end
         [dump, ind] = max(cost);
+
         mu=update_rate(ind).*mu;
-        
+        if(mu>0.01)
+            mu=0.01;
+        end
+        new_mu=mu;
        	%% update parameters
        	W=W+mu.*(vh_data-vh_model);
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
        	z=z+mu.*exp(-z).*(z_data-z_model);
-        z=max(log(1e-9),min(z,log(50)));
+        z=max(log(1e-9),min(z,log(20)));
        	variance = exp(z);
 
        	if(max(max(isnan(W))))
@@ -233,8 +236,6 @@ for i=1:tot_iter
 
 
 
-       %% decreasing update parameter
-       %mu=0.995.*mu;
 
        %% Save parameters and output to file
        if(mod(curr_iter,save_freq)==0)

@@ -7,7 +7,7 @@ images=images';
 %% parameters
 visible_node = images;
 num_hidden = 100;
-mu = 0.00007;
+mu = 0.000008;
 size_batch = 1000;
 tot_iter = 10^5;
 num_gibbstep = 1;
@@ -23,10 +23,10 @@ runRBM=0;
 runGRBM=1;
 %%
 if(runRBM)
-	[W, b, c, e] = rbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout);
+	[W, b, c, e, samples] = rbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout);
 end
 
 if(runGRBM)
-	visible_node = 255.*visible_node;
-	[W, b, c, e] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout,update_rate);
+	visible_node = 255.*visible_node; 
+	[W, b, c, e, new_mu, variance, samples] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout,update_rate);
 end
