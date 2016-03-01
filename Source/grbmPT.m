@@ -1,4 +1,4 @@
-function [ W, b, c, e, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout, update_rate)
+function [ W, b, c, e, variance, samples ] = grbmPT( visible_node, num_hidden, mu, size_batch, tot_iter, num_gibbstep, num_Temp, swap_iter, save_freq, printout, update_rate)
 %% Initialize internal parameters
 num_visible = size(visible_node,2);
 num_data = size(visible_node,1);
@@ -170,19 +170,30 @@ for i=1:tot_iter
             end
                 
                 E_B = E_GRBM(v_m{end},W,b,c,variance);
+                if(isnan(E_B))
+                    disp('E_B is NaN');
+                    return;
+                end
             for u=1:numel(update_rate)
                 
                 W_cand=W+update_rate(u).*mu.*(vh_data-vh_model);
                 b_cand=b+update_rate(u).*mu.*(v_data-v_model);
                 c_cand=c+update_rate(u).*mu.*(h_data-h_model);
                 z_cand=z+update_rate(u).*mu.*exp(-z).*(z_data-z_model);
-                var_cand = exp(max(1e-9 ,min(z_cand,log(50) )));
+                var_cand = exp(max(log(1e-9) ,min(z_cand,log(50) )));
                 
 
 
                 E_D = E_GRBM(v_mu,W_cand,b_cand,c_cand,var_cand);
+                if(isnan(E_D))
+                    disp('E_D is NaN');
+                    return;
+                end
                 E_M = E_GRBM(v_m{end},W_cand,b_cand,c_cand,var_cand);
-
+                if(isnan(E_M))
+                    disp('E_M is NaN');
+                    return;
+                end
                 cost(u)=sum(-E_D-logsum(E_B-E_M) + log (size(v_mu,1)) );
                 if(printout)
                     if(isnan(cost(u)))
@@ -200,7 +211,8 @@ for i=1:tot_iter
        	b=b+mu.*(v_data-v_model);
        	c=c+mu.*(h_data-h_model);
        	z=z+mu.*exp(-z).*(z_data-z_model);
-       	variance = exp(max(1e-9,min(z,log(50))));
+        z=max(log(1e-9),min(z,log(50)));
+       	variance = exp(z);
 
        	if(max(max(isnan(W))))
         	disp('Error: W Diverging');
