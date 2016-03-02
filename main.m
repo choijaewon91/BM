@@ -6,13 +6,13 @@ images = loadMNISTImages('train-images.idx3-ubyte');
 images=images';
 %% parameters
 visible_node = images;
-num_hidden = 100;
-mu = 0.000008;
+num_hidden = 200;
+mu = 0.000003;
 size_batch = 1000;
 tot_iter = 10^5;
 num_gibbstep = 1;
 num_Temp = 21;
-swap_iter = 2;
+swap_iter = 1;
 save_freq = 1e2;
 printout = 1;
 update_rate=[0.9 1 1.1];

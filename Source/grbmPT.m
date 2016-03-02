@@ -205,10 +205,10 @@ for i=1:tot_iter
         [dump, ind] = max(cost);
 
         mu=update_rate(ind).*mu;
-        if(mu>0.01)
-            mu=0.01;
-        end
-        new_mu=mu;
+        mu=max(min(mu,0.01),1e-8);
+
+
+        new_mu(curr_iter)=mu;
        	%% update parameters
        	W=W+mu.*(vh_data-vh_model);
        	b=b+mu.*(v_data-v_model);
@@ -254,7 +254,7 @@ for i=1:tot_iter
             if(printout)
                 disp(['Savining File:  ' filename]);
             end
-            save(filename,'variance','samples', 'W','b','c','e','num_hidden','mu','size_batch', 'tot_iter', 'num_gibbstep', 'num_Temp', 'swap_iter');
+            save(filename,'variance','samples', 'W','b','c','e','num_hidden','new_mu','size_batch', 'tot_iter', 'num_gibbstep', 'num_Temp', 'swap_iter');
         end
        
     end
